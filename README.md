@@ -2,15 +2,18 @@
 
 违禁词监控系统
 
-## 违禁词系统
+## 命令
 
-- **banwords -add**: 添加违禁词
-  - 例子: `banwords -add 违禁词`
-- **banwords -rm**: 移除违禁词
-  - 例子: `banwords -rm 违禁词`
-- **banwords -list**: 查看违禁词列表
-  - 例子: `banwords -list`
-- **banwords -on**: 开启违禁词检测
-  - 例子: `banwords -on`
-- **banwords -off**: 关闭违禁词检测
-  - 例子: `banwords -off`
+bw-on 开启违禁词监控
+
+bw-off 关闭违禁词监控
+
+bw-list 查看违禁词列表
+
+bw-add 添加违禁词
+
+bw-rm 删除违禁词
+
+## 更新日志
+
+2024 年 8 月 12 日，重构代码，精简命令
