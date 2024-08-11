@@ -56,12 +56,12 @@ def save_BanWords(group_id, BanWords):
 
 # 查看违禁词开关状态
 def load_BanWords_switch(group_id):
-    return load_switch(group_id, "BanWords_switch")
+    return load_switch(group_id, "违禁词监控")
 
 
 # 保存违禁词开关状态
 def save_BanWords_switch(group_id, switch):
-    save_switch(group_id, "BanWords_switch", switch)
+    save_switch(group_id, "违禁词监控", switch)
 
 
 # 查看违禁词列表
@@ -74,43 +74,6 @@ async def list_BanWords(websocket, group_id):
     await send_group_msg(websocket, group_id, BanWords_message)
 
 
-# 视频检测管理函数
-async def manage_video_check(
-    websocket, group_id, raw_message, message_id, is_authorized
-):
-
-    if is_authorized:
-        # 开启视频检测
-        if raw_message == "VideoCheck -on":
-            if load_switch(group_id, "VideoCheck"):
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}]视频检测已经开启了，无需重复开启。",
-                )
-            else:
-                save_switch(group_id, "VideoCheck", True)
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}]已开启视频检测。",
-                )
-        elif raw_message == "VideoCheck -off":
-            if not load_switch(group_id, "VideoCheck"):
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}]视频检测已经关闭了，无需重复关闭。",
-                )
-            else:
-                save_switch(group_id, "VideoCheck", False)
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}]已关闭视频检测。",
-                )
-
-
 # 检查违禁词的主函数
 async def check_BanWords(websocket, group_id, msg):
     if not load_BanWords_switch(group_id) or is_authorized(
@@ -118,12 +81,14 @@ async def check_BanWords(websocket, group_id, msg):
     ):
         return False
 
-    if load_switch(group_id, "VideoCheck"):
+    # 视频监控
+    if load_switch(group_id, "视频监控"):
         message_id = int(msg["message_id"])
-        await delete_msg(websocket, message_id)
-        warning_message = "为防止广告，本群禁止发送视频。"
-        await send_group_msg(websocket, group_id, warning_message)
-        return True
+        if "[CQ:video," in msg["raw_message"]:
+            await delete_msg(websocket, message_id)
+            warning_message = "为防止广告，本群禁止发送视频。"
+            await send_group_msg(websocket, group_id, warning_message)
+            return
 
     # 使用正则表达式检测文本中是否包含任何不可见字符
     if re.search(r"[\u200b\u200c\u200d\u200e\u200f\ufeff]", msg.get("raw_message")):
@@ -131,8 +96,9 @@ async def check_BanWords(websocket, group_id, msg):
         await send_group_msg(websocket, group_id, warning_message)
         message_id = int(msg["message_id"])
         await delete_msg(websocket, message_id)
-        return True
+        return
 
+    # 违禁词检测
     BanWords = load_BanWords(group_id)
     raw_message = msg["raw_message"]
 
@@ -154,81 +120,114 @@ async def check_BanWords(websocket, group_id, msg):
     return False
 
 
+# 视频检测管理
+async def manage_video_check(
+    websocket, group_id, raw_message, message_id, is_authorized
+):
+    if not is_authorized:
+        return
+
+    command_actions = {
+        "vc-on": (True, "已开启视频监控。", "视频监控已经开启了，无需重复开启。"),
+        "vc-off": (False, "已关闭视频监控。", "视频监控已经关闭了，无需重复关闭。"),
+    }
+
+    action = command_actions.get(raw_message)
+    if action:
+        current_status, success_message, fail_message = action
+        if load_switch(group_id, "视频监控") == current_status:
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}]{fail_message}",
+            )
+        else:
+            save_switch(group_id, "视频监控", current_status)
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}]{success_message}",
+            )
+
+
 # 违禁词管理
 async def manage_BanWords(
     websocket, message_id, group_id, user_id, raw_message, is_authorized
 ):
+    if not is_authorized:
+        return
 
-    if is_authorized:
-        if raw_message == "BanWords -on":
-            if load_BanWords_switch(group_id):
+    command_actions = {
+        "bw-on": (True, "已开启违禁词检测。", "违禁词检测已经开启了，无需重复开启。"),
+        "bw-off": (
+            False,
+            "已关闭违禁词检测。",
+            "违禁词检测已经关闭了，无需重复关闭。",
+        ),
+        "bw-list": ("list", None, None),
+    }
+
+    if raw_message.startswith("bw-add "):
+        new_word = raw_message.split(" ", 2)[2].strip()
+        BanWords = load_BanWords(group_id)
+        if new_word not in BanWords:
+            BanWords.append(new_word)
+            save_BanWords(group_id, BanWords)
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}] 已添加违禁词: {new_word}",
+            )
+        else:
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}] 违禁词已存在，无需重复添加。",
+            )
+    elif raw_message.startswith("bw-rm "):
+        remove_word = raw_message.split(" ", 2)[2].strip()
+        BanWords = load_BanWords(group_id)
+        if remove_word in BanWords:
+            BanWords.remove(remove_word)
+            save_BanWords(group_id, BanWords)
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}] 已删除违禁词: {remove_word}",
+            )
+        else:
+            await send_group_msg(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}] 违禁词不存在，无需删除。",
+            )
+    else:
+        action = command_actions.get(raw_message)
+        if action:
+            current_status, success_message, fail_message = action
+            if action[0] == "list":
+                await list_BanWords(websocket, group_id)
+            elif load_BanWords_switch(group_id) == current_status:
                 await send_group_msg(
                     websocket,
                     group_id,
-                    f"[CQ:reply,id={message_id}] 违禁词检测已经开启了，无需重复开启。",
+                    f"[CQ:reply,id={message_id}]{fail_message}",
                 )
             else:
-                save_BanWords_switch(group_id, True)
+                save_BanWords_switch(group_id, current_status)
                 await send_group_msg(
                     websocket,
                     group_id,
-                    f"[CQ:reply,id={message_id}] 已开启违禁词检测。",
-                )
-        elif raw_message == "BanWords -off":
-            if not load_BanWords_switch(group_id):
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 违禁词检测已经关闭了，无需重复关闭。",
-                )
-            else:
-                save_BanWords_switch(group_id, False)
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 已关闭违禁词检测。",
+                    f"[CQ:reply,id={message_id}]{success_message}",
                 )
 
-        if raw_message.startswith("BanWords -add "):
-            new_word = raw_message.split(" ", 2)[2].strip()
-            BanWords = load_BanWords(group_id)
-            if new_word not in BanWords:
-                BanWords.append(new_word)
-                save_BanWords(group_id, BanWords)
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 已添加违禁词: {new_word}",
-                )
-            else:
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 违禁词已存在，无需重复添加。",
-                )
-        elif raw_message.startswith("BanWords -rm "):
-            remove_word = raw_message.split(" ", 2)[2].strip()
-            BanWords = load_BanWords(group_id)
-            if remove_word in BanWords:
-                BanWords.remove(remove_word)
-                save_BanWords(group_id, BanWords)
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 已删除违禁词: {remove_word}",
-                )
-            else:
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[CQ:reply,id={message_id}] 违禁词不存在，无需删除。",
-                )
-        elif raw_message == "BanWords -list":
-            await list_BanWords(websocket, group_id)
 
-
+# 处理违禁词消息事件
 async def handle_BanWords_group_message(websocket, msg):
     try:
+        # 确保数据目录存在
+        os.makedirs(DATA_DIR, exist_ok=True)
+
         user_id = msg["user_id"]
         group_id = msg["group_id"]
         raw_message = msg["raw_message"]
@@ -255,11 +254,3 @@ async def handle_BanWords_group_message(websocket, msg):
     except Exception as e:
         logging.error(f"处理违禁词系统时发生错误: {e}")
         return
-
-
-async def BanWords_main(websocket, msg):
-
-    # 确保数据目录存在
-    os.makedirs(DATA_DIR, exist_ok=True)
-
-    await handle_BanWords_group_message(websocket, msg)
