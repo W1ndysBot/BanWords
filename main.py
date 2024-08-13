@@ -110,7 +110,7 @@ async def check_BanWords(websocket, group_id, msg):
             message_id = int(msg["message_id"])
             await delete_msg(websocket, message_id)
             warning_message = (
-                f"警告：请不要发送违禁词，误封请联系管理员处理[CQ:at,qq={owner_id}]"
+                f"警告：请不要发送违禁词，误封请联系管理员处理 [CQ:at,qq={owner_id[0]}]"
             )
             await send_group_msg(websocket, group_id, warning_message)
             user_id = msg["sender"]["user_id"]
