@@ -118,13 +118,15 @@ async def check_BanWords(websocket, group_id, msg):
             await send_private_msg(
                 websocket,
                 owner_id,
-                f"""
-群{group_id}
-成员{user_id}
-在{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-发送了违禁词{word}
-原消息内容为{msg['raw_message']}
-""",
+                f"""群 {group_id}
+
+成员 {user_id}
+
+在 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+发送了违禁词 {word}
+
+原消息内容为 {msg['raw_message']}""",
             )
             return True
 
