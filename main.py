@@ -108,7 +108,7 @@ async def check_BanWords(websocket, group_id, msg):
         if re.search(word, raw_message):
             message_id = int(msg["message_id"])
             await delete_msg(websocket, message_id)
-            warning_message = f"""警告：请不要发送违禁词！
+            warning_message = f"""警告：请不要发送：{word}！
 如有误删是发的内容触发了违禁词，请及时联系管理员处理。
 
 有新的事件被处理了，请查看是否正常处理[CQ:at,qq=2769731875]"""
