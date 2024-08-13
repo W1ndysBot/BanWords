@@ -3,6 +3,7 @@ import re
 import os
 import sys
 import asyncio
+import datetime
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -108,13 +109,23 @@ async def check_BanWords(websocket, group_id, msg):
         if re.search(word, raw_message):
             message_id = int(msg["message_id"])
             await delete_msg(websocket, message_id)
-            warning_message = f"""警告：请不要发送：{word}！
-如有误删是发的内容触发了违禁词，请及时联系管理员处理。
-
-有新的事件被处理了，请查看是否正常处理[CQ:at,qq=2769731875]"""
+            warning_message = (
+                f"警告：请不要发送违禁词，误封请联系管理员处理[CQ:at,qq={owner_id}]"
+            )
             await send_group_msg(websocket, group_id, warning_message)
             user_id = msg["sender"]["user_id"]
             await set_group_ban(websocket, group_id, user_id, 60)
+            await send_private_msg(
+                websocket,
+                owner_id,
+                f"""
+群{group_id}
+成员{user_id}
+在{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+发送了违禁词{word}
+原消息内容为{msg['raw_message']}
+""",
+            )
             return True
 
     return False
