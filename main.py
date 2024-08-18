@@ -101,20 +101,21 @@ async def check_BanWords(websocket, group_id, msg):
 
     # 违禁词检测
     BanWords = load_BanWords(group_id)
-    raw_message = msg["raw_message"]
+    raw_message = msg.get("raw_message")
 
     for word in BanWords:
 
         # 检查是否为违禁词，在re.search中，违禁词内容可以是字符串或正则表达式
         if re.search(word, raw_message):
-            message_id = int(msg["message_id"])
+            message_id = msg.get("message_id")
+            user_id = msg.get("sender").get("user_id")
+            await set_group_ban(websocket, group_id, user_id, 60)
             await delete_msg(websocket, message_id)
             warning_message = (
                 f"警告：请不要发送违禁词，误封请联系管理员处理 [CQ:at,qq={owner_id[0]}]"
             )
             await send_group_msg(websocket, group_id, warning_message)
-            user_id = msg["sender"]["user_id"]
-            await set_group_ban(websocket, group_id, user_id, 60)
+            await send_group_msg(websocket, group_id, raw_message)
             await send_private_msg(
                 websocket,
                 owner_id,
@@ -126,7 +127,7 @@ async def check_BanWords(websocket, group_id, msg):
 
 发送了违禁词 {word}
 
-原消息内容为 {msg['raw_message']}""",
+原消息内容为 {raw_message}""",
             )
             return True
 
