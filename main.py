@@ -66,13 +66,18 @@ def save_BanWords_switch(group_id, switch):
 
 
 # 查看违禁词列表
-async def list_BanWords(websocket, group_id):
+async def list_BanWords(websocket, group_id, user_id):
     BanWords = load_BanWords(group_id)
     if BanWords:
         BanWords_message = "违禁词列表:\n" + "\n".join(BanWords)
     else:
         BanWords_message = "违禁词列表为空。"
-    await send_group_msg(websocket, group_id, BanWords_message)
+    await send_group_msg(
+        websocket,
+        group_id,
+        f"[CQ:at,id={user_id}]违禁词列表已私发，请注意查收。",
+    )
+    await send_private_msg(websocket, user_id, BanWords_message)
 
 
 # 检查违禁词的主函数
@@ -182,16 +187,14 @@ async def manage_BanWords(
     }
 
     if raw_message.startswith("bw-add"):
-        parts = raw_message.split(" ", 1)
-        if len(parts) < 2:
+        new_word = raw_message[6:].strip()  # 从命令字符串中直接提取违禁词
+        if not new_word:
             await send_group_msg(
                 websocket,
                 group_id,
-                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-add<违禁词>",
+                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-add违禁词",
             )
-            logging.error(f"命令格式错误: {raw_message}, parts: {parts}")
             return
-        new_word = parts[1].strip()
         BanWords = load_BanWords(group_id)
         if new_word not in BanWords:
             BanWords.append(new_word)
@@ -208,16 +211,14 @@ async def manage_BanWords(
                 f"[CQ:reply,id={message_id}] 违禁词已存在，无需重复添加。",
             )
     elif raw_message.startswith("bw-rm"):
-        parts = raw_message.split(" ", 1)
-        if len(parts) < 2:
+        remove_word = raw_message[6:].strip()  # 从命令字符串中直接提取违禁词
+        if not remove_word:
             await send_group_msg(
                 websocket,
                 group_id,
-                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-rm<违禁词>",
+                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-rm违禁词",
             )
-            logging.error(f"命令格式错误: {raw_message}, parts: {parts}")
             return
-        remove_word = parts[1].strip()
         BanWords = load_BanWords(group_id)
         if remove_word in BanWords:
             BanWords.remove(remove_word)
@@ -238,7 +239,7 @@ async def manage_BanWords(
         if action:
             current_status, success_message, fail_message = action
             if action[0] == "list":
-                await list_BanWords(websocket, group_id)
+                await list_BanWords(websocket, group_id, user_id)
             elif load_BanWords_switch(group_id) == current_status:
                 await send_group_msg(
                     websocket,
