@@ -181,17 +181,17 @@ async def manage_BanWords(
         "bw-list": ("list", None, None),
     }
 
-    if raw_message.startswith("bw-add "):
-        parts = raw_message.split(" ", 2)
+    if raw_message.startswith("bw-add"):
+        parts = raw_message.split(" ", 1)
         if len(parts) < 2:
             await send_group_msg(
                 websocket,
                 group_id,
-                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-add <违禁词>",
+                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-add<违禁词>",
             )
             logging.error(f"命令格式错误: {raw_message}, parts: {parts}")
             return
-        new_word = parts[1].strip() if len(parts) == 2 else parts[2].strip()
+        new_word = parts[1].strip()
         BanWords = load_BanWords(group_id)
         if new_word not in BanWords:
             BanWords.append(new_word)
@@ -207,17 +207,17 @@ async def manage_BanWords(
                 group_id,
                 f"[CQ:reply,id={message_id}] 违禁词已存在，无需重复添加。",
             )
-    elif raw_message.startswith("bw-rm "):
-        parts = raw_message.split(" ", 2)
+    elif raw_message.startswith("bw-rm"):
+        parts = raw_message.split(" ", 1)
         if len(parts) < 2:
             await send_group_msg(
                 websocket,
                 group_id,
-                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-rm <违禁词>",
+                f"[CQ:reply,id={message_id}] 命令格式错误，请使用: bw-rm<违禁词>",
             )
             logging.error(f"命令格式错误: {raw_message}, parts: {parts}")
             return
-        remove_word = parts[1].strip() if len(parts) == 2 else parts[2].strip()
+        remove_word = parts[1].strip()
         BanWords = load_BanWords(group_id)
         if remove_word in BanWords:
             BanWords.remove(remove_word)
