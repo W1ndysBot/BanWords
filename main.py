@@ -260,11 +260,11 @@ async def handle_BanWords_group_message(websocket, msg):
         # 确保数据目录存在
         os.makedirs(DATA_DIR, exist_ok=True)
 
-        user_id = msg["user_id"]
-        group_id = msg["group_id"]
-        raw_message = msg["raw_message"]
-        role = msg["sender"]["role"]
-        message_id = int(msg["message_id"])
+        user_id = str(msg.get("sender", {}).get("user_id"))
+        group_id = str(msg.get("group_id"))
+        raw_message = str(msg.get("raw_message"))
+        role = str(msg.get("sender", {}).get("role"))
+        message_id = int(msg.get("message_id"))
 
         is_admin = is_group_admin(role)  # 是否是群管理员
         is_owner = is_group_owner(role)  # 是否是群主
