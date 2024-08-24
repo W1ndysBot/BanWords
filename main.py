@@ -129,27 +129,31 @@ async def check_BanWords(websocket, group_id, msg):
         # 检查是否为违禁词，在re.search中，违禁词内容可以是字符串或正则表达式
         if re.search(word, raw_message):
             message_id = msg.get("message_id")
-            user_id = msg.get("sender").get("user_id")
+            user_id = str(msg.get("sender").get("user_id"))
             await set_group_ban(websocket, group_id, user_id, 60)
             await delete_msg(websocket, message_id)
             warning_message = (
                 f"警告：请不要发送违禁词，误封请联系管理员处理 [CQ:at,qq={owner_id[0]}]"
             )
             await send_group_msg(websocket, group_id, warning_message)
-
             await send_private_msg(
                 websocket,
                 owner_id,
-                f"""群 {group_id}
-
-成员 {user_id}
-
-在 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-发送了违禁词 {word}
-
-原消息内容为 {raw_message}""",
+                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
             )
+            logging.info(f"已发送私聊提醒给root管理员")
+            history_msg = await get_group_msg_history(websocket, group_id, 10)
+            messages = history_msg.get("data", {}).get("messages", [])
+            for msg in messages:
+                # logging.info(f"检查消息: {msg}")
+                if str(msg.get("user_id")) == user_id:
+                    # logging.info(f"用户ID符合进一步检查消息: {msg}")
+                    if "[CQ:video," in msg.get("raw_message"):
+                        # logging.info(f"消息中有视频，撤回消息")
+                        await delete_msg(websocket, msg.get("message_id"))
+                        await send_group_msg(
+                            websocket, group_id, "检测到之前的消息中有视频，已撤回"
+                        )
             return True
 
     return False
