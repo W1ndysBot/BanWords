@@ -152,10 +152,11 @@ async def check_BanWords(websocket, group_id, msg):
                         # logging.info(f"消息中有视频，撤回消息")
                         await delete_msg(websocket, msg.get("message_id"))
                         await send_group_msg(
-                            websocket, group_id, "检测到之前的消息中有视频，已撤回"
+                            websocket,
+                            group_id,
+                            "卷卷递归发现之前的消息中有视频，已进行撤回",
                         )
             return True
-
     return False
 
 
