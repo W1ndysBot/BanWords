@@ -202,15 +202,15 @@ async def manage_BanWords(
 
     try:
         if raw_message.startswith("bwadd"):
-            new_word = re.search(r"bwadd(.*)", raw_message)
-            if not new_word:
+            match = re.search(r"bwadd(.*)", raw_message)
+            if not match:
                 await send_group_msg(
                     websocket,
                     group_id,
                     f"[CQ:reply,id={message_id}]命令格式错误，请使用: bwadd违禁词",
                 )
                 return
-            new_word = new_word.group(1).strip()
+            new_word = match.group(1).strip()
             BanWords = load_BanWords(group_id)
             if new_word not in BanWords:
                 BanWords.append(new_word)
@@ -227,14 +227,15 @@ async def manage_BanWords(
                     f"[CQ:reply,id={message_id}]违禁词已存在，无需重复添加。",
                 )
         elif raw_message.startswith("bwrm"):
-            remove_word = raw_message[6:].strip()  # 从命令字符串中直接提取违禁词
-            if not remove_word:
+            match = re.search(r"bwrm(.*)", raw_message)
+            if not match:
                 await send_group_msg(
                     websocket,
                     group_id,
                     f"[CQ:reply,id={message_id}]命令格式错误，请使用: bwrm违禁词",
                 )
                 return
+            remove_word = match.group(1).strip()
             BanWords = load_BanWords(group_id)
             if remove_word in BanWords:
                 BanWords.remove(remove_word)
@@ -250,8 +251,10 @@ async def manage_BanWords(
                     group_id,
                     f"[CQ:reply,id={message_id}]违禁词不存在，无需删除。",
                 )
+
         elif raw_message.startswith("bwlist"):
             await list_BanWords(websocket, group_id, user_id)
+
         elif raw_message.startswith("bwon"):
             save_BanWords_switch(group_id, True)
             await send_group_msg(
@@ -305,6 +308,7 @@ async def handle_BanWords_group_message(websocket, msg):
         is_authorized = (is_admin or is_owner) or (
             user_id in owner_id
         )  # 是否是群主或管理员或root管理员
+
         if raw_message == "banwords":
             await BanWords(websocket, group_id, message_id)
 
