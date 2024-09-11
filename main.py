@@ -135,7 +135,8 @@ async def check_BanWords(websocket, group_id, msg):
 
             # 初始化警告消息
             warning_message = (
-                f"[CQ:at,qq={user_id}]警告：请不要发送违禁词，误封请联系管理员处理"
+                f"[CQ:at,qq={user_id}]\n"
+                + "警告：请不要发送违禁词，误封请联系管理员处理\n"
             )
 
             # 获取群成员列表, 艾特管理员
@@ -148,7 +149,7 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"违规QQ是【{user_id}】\n"
             warning_message += f"快捷命令：\n"
             warning_message += f"t{user_id} 踢出\n"
-            warning_message += f"bladd{user_id} 踢出并拉黑\n"
+            warning_message += f"bladd{user_id} 踢出并拉黑"
 
             await send_group_msg(websocket, group_id, warning_message)
             for group_id in report_group_id:
