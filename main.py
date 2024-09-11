@@ -11,7 +11,7 @@ sys.path.append(
 
 
 from app.api import *
-from app.config import owner_id
+from app.config import *
 from app.switch import load_switch, save_switch
 
 DATA_DIR = os.path.join(
@@ -113,12 +113,12 @@ async def check_BanWords(websocket, group_id, msg):
             return
 
     # 使用正则表达式检测文本中是否包含任何不可见字符
-    if re.search(r"[\u200b\u200c\u200d\u200e\u200f\ufeff]", msg.get("raw_message")):
-        warning_message = "检测到消息中有不可见字符，已撤回"
-        await send_group_msg(websocket, group_id, warning_message)
-        message_id = int(msg["message_id"])
-        await delete_msg(websocket, message_id)
-        return
+    # if re.search(r"[\u200b\u200c\u200d\u200e\u200f\ufeff]", msg.get("raw_message")):
+    #     warning_message = "检测到消息中有不可见字符，已撤回"
+    #     await send_group_msg(websocket, group_id, warning_message)
+    #     message_id = int(msg["message_id"])
+    #     await delete_msg(websocket, message_id)
+    #     return
 
     # 违禁词检测
     BanWords = load_BanWords(group_id)
@@ -132,25 +132,34 @@ async def check_BanWords(websocket, group_id, msg):
             user_id = str(msg.get("sender").get("user_id"))
             await set_group_ban(websocket, group_id, user_id, 60)
             await delete_msg(websocket, message_id)
-            warning_message = f"警告：请不要发送违禁词，误封请联系管理员处理"
 
-            # 获取群成员列表
+            # 初始化警告消息
+            warning_message = (
+                f"[CQ:at,qq={user_id}]警告：请不要发送违禁词，误封请联系管理员处理"
+            )
+
+            # 获取群成员列表, 艾特管理员
             group_member = await get_group_member_list(websocket, group_id)
             for member in group_member:
                 if member.get("role") == "owner" or member.get("role") == "admin":
                     warning_message += f"[CQ:at,qq={member.get('user_id')}] "
 
+            warning_message += "\n"
+            warning_message += f"违规QQ是【{user_id}】\n"
+            warning_message += f"快捷命令：\n"
+            warning_message += f"t{user_id} 踢出\n"
+            warning_message += f"bladd{user_id} 踢出并拉黑\n"
+
             await send_group_msg(websocket, group_id, warning_message)
-            await send_private_msg(
-                websocket,
-                owner_id,
-                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
-            )
-            logging.info(f"已发送私聊提醒给root管理员")
+            for group_id in test_group_id:
+                await send_group_msg(
+                    websocket,
+                    group_id,
+                    f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
+                )
             history_msg = await get_group_msg_history(websocket, group_id, 10)
             messages = history_msg.get("data", {}).get("messages", [])
             for msg in messages:
-                logging.info(f"扫描群{group_id}的历史消息")
                 if str(msg.get("user_id")) == user_id:
                     if "[CQ:video," in msg.get("raw_message"):
                         await delete_msg(websocket, msg.get("message_id"))
