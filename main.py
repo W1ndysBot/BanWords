@@ -151,7 +151,7 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"bladd{user_id} 踢出并拉黑\n"
 
             await send_group_msg(websocket, group_id, warning_message)
-            for group_id in test_group_id:
+            for group_id in report_group_id:
                 await send_group_msg(
                     websocket,
                     group_id,
