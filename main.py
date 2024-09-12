@@ -152,12 +152,11 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"bladd{user_id} 踢出并拉黑"
 
             await send_group_msg(websocket, group_id, warning_message)
-            for group_id in report_group_id:
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
-                )
+            await send_group_msg(
+                websocket,
+                report_group_id,
+                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
+            )
             history_msg = await get_group_msg_history(websocket, group_id, 10)
             messages = history_msg.get("data", {}).get("messages", [])
             for msg in messages:
