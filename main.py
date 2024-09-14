@@ -161,12 +161,15 @@ async def check_BanWords(websocket, group_id, msg):
             messages = history_msg.get("data", {}).get("messages", [])
             for msg in messages:
                 if str(msg.get("user_id")) == user_id:
+                    FLAG = False
                     if "[CQ:video," in msg.get("raw_message"):
                         await delete_msg(websocket, msg.get("message_id"))
+                        FLAG = True
+                    if FLAG:
                         await send_group_msg(
                             websocket,
                             group_id,
-                            "卷卷递归发现之前的消息中有视频，已进行撤回",
+                            "卷卷递归发现违规QQ之前的消息中有视频，已进行撤回",
                         )
             return True
     return False
