@@ -142,7 +142,7 @@ async def check_BanWords(websocket, group_id, msg):
             # 获取群成员列表, 艾特管理员
             group_member = await get_group_member_list(websocket, group_id)
             for member in group_member:
-                if member.get("role") == "owner" or member.get("role") == "admin":
+                if member.get("role") == "owner":
                     warning_message += f"[CQ:at,qq={member.get('user_id')}] "
 
             warning_message += "\n"
