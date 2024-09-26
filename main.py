@@ -148,13 +148,13 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += "\n"
             warning_message += f"违规QQ是【{user_id}】\n"
             warning_message += f"快捷命令：t踢出bladd踢出并拉黑\n"
+            await send_group_msg(websocket, group_id, warning_message)
 
             # 分离命令便于复制
             await send_group_msg_with_reply(websocket, group_id, f"t{user_id}")
 
             await send_group_msg_with_reply(websocket, group_id, f"bladd{user_id}")
 
-            await send_group_msg(websocket, group_id, warning_message)
             await send_group_msg(
                 websocket,
                 report_group_id,
