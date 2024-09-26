@@ -150,6 +150,7 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"快捷命令：t踢出bladd踢出并拉黑\n"
             await send_group_msg(websocket, group_id, warning_message)
 
+            await asyncio.sleep(0.1)
             # 分离命令便于复制
             await send_group_msg_with_reply(websocket, group_id, f"t{user_id}")
 
