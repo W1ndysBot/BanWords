@@ -153,7 +153,7 @@ async def check_BanWords(websocket, group_id, msg):
             await send_group_msg(
                 websocket,
                 report_group_id,
-                f"在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】",
+                f"在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】",
             )
             await send_group_msg(websocket, report_group_id, f"发送了违禁词【{word}】")
             await send_group_msg(
