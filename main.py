@@ -72,14 +72,14 @@ async def list_BanWords(websocket, group_id, user_id):
         BanWords = load_BanWords(group_id)
         if BanWords:
             BanWords_message = "群" + group_id + "的违禁词列表:\n" + "\n".join(BanWords)
+            await send_private_msg(
+                websocket, user_id, BanWords_message
+            )  # 私发违禁词列表
             await send_group_msg(
                 websocket,
                 group_id,
                 f"[CQ:at,qq={user_id}] 违禁词列表已私发，请注意查收。如果未收到请先私聊我一条消息。",  # 在群里艾特回复已私发
             )
-            await send_private_msg(
-                websocket, user_id, BanWords_message
-            )  # 私发违禁词列表
         else:
             BanWords_message = "群" + group_id + "的违禁词列表为空。"
             await send_group_msg(
@@ -111,14 +111,6 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message = "为防止广告，本群禁止发送视频。"
             await send_group_msg(websocket, group_id, warning_message)
             return
-
-    # 使用正则表达式检测文本中是否包含任何不可见字符
-    # if re.search(r"[\u200b\u200c\u200d\u200e\u200f\ufeff]", msg.get("raw_message")):
-    #     warning_message = "检测到消息中有不可见字符，已撤回"
-    #     await send_group_msg(websocket, group_id, warning_message)
-    #     message_id = int(msg["message_id"])
-    #     await delete_msg(websocket, message_id)
-    #     return
 
     # 违禁词检测
     BanWords = load_BanWords(group_id)
@@ -156,10 +148,16 @@ async def check_BanWords(websocket, group_id, msg):
 
             await send_group_msg_with_reply(websocket, group_id, f"bladd{user_id}")
 
+            await send_group_msg(websocket, report_group_id, f"群【{group_id}】")
+            await send_group_msg(websocket, report_group_id, f"成员【{user_id}】")
             await send_group_msg(
                 websocket,
                 report_group_id,
-                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】\n发送了违禁词【{word}】\n原消息内容为【{raw_message}】",
+                f"在【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】",
+            )
+            await send_group_msg(websocket, report_group_id, f"发送了违禁词【{word}】")
+            await send_group_msg(
+                websocket, report_group_id, f"原消息内容为【{raw_message}】"
             )
             history_msg = await get_group_msg_history(websocket, group_id, 10)
             messages = history_msg.get("data", {}).get("messages", [])
