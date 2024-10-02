@@ -3,7 +3,7 @@ import re
 import os
 import sys
 import asyncio
-import datetime
+from datetime import datetime
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -292,8 +292,7 @@ async def manage_BanWords(
 async def BanWords(websocket, group_id, message_id):
     message = (
         f"[CQ:reply,id={message_id}]\n"
-        + """
-违禁词系统
+        + """违禁词系统
 
 bwon 开启违禁词监控
 bwoff 关闭违禁词监控
