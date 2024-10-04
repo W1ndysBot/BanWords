@@ -139,7 +139,7 @@ async def check_BanWords(websocket, group_id, msg):
 
             warning_message += "\n"
             warning_message += f"违规QQ是【{user_id}】\n"
-            warning_message += f"快捷命令：t踢出bladd踢出并拉黑\n"
+            warning_message += f"快捷命令：t踢出bladd踢出并拉黑"
             await send_group_msg(websocket, group_id, warning_message)
 
             await asyncio.sleep(0.1)
@@ -147,18 +147,17 @@ async def check_BanWords(websocket, group_id, msg):
             await send_group_msg_with_reply(websocket, group_id, f"t{user_id}")
 
             await send_group_msg_with_reply(websocket, group_id, f"bladd{user_id}")
-
-            await send_group_msg(websocket, report_group_id, f"群【{group_id}】")
-            await send_group_msg(websocket, report_group_id, f"成员【{user_id}】")
+            await send_group_msg_with_reply(
+                websocket, report_group_id, f"------------------------"
+            )
+            await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
             await send_group_msg(
                 websocket,
                 report_group_id,
-                f"在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】",
+                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
             )
-            await send_group_msg(websocket, report_group_id, f"发送了违禁词【{word}】")
-            await send_group_msg(
-                websocket, report_group_id, f"原消息内容为【{raw_message}】"
-            )
+            await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
+            await send_group_msg(websocket, report_group_id, f"{raw_message}")
             history_msg = await get_group_msg_history(websocket, group_id, 10)
             messages = history_msg.get("data", {}).get("messages", [])
             for msg in messages:
