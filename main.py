@@ -148,7 +148,9 @@ async def check_BanWords(websocket, group_id, msg):
 
             await send_group_msg_with_reply(websocket, group_id, f"bladd{user_id}")
             await send_group_msg_with_reply(
-                websocket, report_group_id, f"------------------------"
+                websocket,
+                report_group_id,
+                f"------------------------------------------",
             )
             await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
             await send_group_msg(
