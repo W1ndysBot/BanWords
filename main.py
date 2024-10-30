@@ -122,7 +122,7 @@ async def check_BanWords(websocket, group_id, msg):
         if re.search(word, raw_message):
             message_id = msg.get("message_id")
             user_id = str(msg.get("sender").get("user_id"))
-            await set_group_ban(websocket, group_id, user_id, 60)
+            await set_group_ban(websocket, group_id, user_id, 60 * 60)  # 禁言1小时
             await delete_msg(websocket, message_id)
 
             # 初始化警告消息
