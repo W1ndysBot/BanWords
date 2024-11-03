@@ -143,15 +143,6 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"快捷命令：t踢出bladd踢出并拉黑"
             await send_group_msg(websocket, group_id, warning_message)
 
-            # 检查邀请链
-            invited_users = get_invited_users(group_id, user_id)
-            if invited_users:
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
-                )
-
             await asyncio.sleep(0.1)
             # 分离命令便于复制
             await send_group_msg_with_reply(websocket, group_id, f"t{user_id}")
@@ -163,6 +154,16 @@ async def check_BanWords(websocket, group_id, msg):
                 f"------------------------------------------",
             )
             await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
+
+            # 检查邀请链
+            invited_users = get_invited_users(group_id, user_id)
+            if invited_users:
+                await send_group_msg(
+                    websocket,
+                    group_id,
+                    f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
+                )
+
             await send_group_msg(
                 websocket,
                 report_group_id,
