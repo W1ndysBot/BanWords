@@ -13,6 +13,7 @@ sys.path.append(
 from app.api import *
 from app.config import *
 from app.switch import load_switch, save_switch
+from app.scripts.InviteChain.main import get_invited_users
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -141,6 +142,15 @@ async def check_BanWords(websocket, group_id, msg):
             warning_message += f"违规QQ是【{user_id}】\n"
             warning_message += f"快捷命令：t踢出bladd踢出并拉黑"
             await send_group_msg(websocket, group_id, warning_message)
+
+            # 检查邀请链
+            invited_users = get_invited_users(group_id, user_id)
+            if invited_users:
+                await send_group_msg(
+                    websocket,
+                    group_id,
+                    f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
+                )
 
             await asyncio.sleep(0.1)
             # 分离命令便于复制
