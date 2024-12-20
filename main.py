@@ -346,7 +346,9 @@ async def handle_BanWords_group_message(websocket, msg):
             websocket, group_id, raw_message, message_id, is_authorized
         )
 
-        await check_BanWords(websocket, group_id, msg)
+        # 如果不是管理员或群主或root管理员，检查违禁词
+        if not is_authorized:
+            await check_BanWords(websocket, group_id, msg)
 
     except Exception as e:
         logging.error(f"处理违禁词系统时发生错误: {e}")
