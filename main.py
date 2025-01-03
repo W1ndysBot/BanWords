@@ -170,20 +170,20 @@ async def check_BanWords(websocket, group_id, msg):
                     f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
                 )
                 await send_group_msg(websocket, report_group_id, f"{raw_message}")
-                history_msg = await get_group_msg_history(websocket, group_id, 10)
-                messages = history_msg.get("data", {}).get("messages", [])
-                for msg in messages:
-                    if str(msg.get("user_id")) == user_id:
-                        FLAG = False
-                        if "[CQ:video," in msg.get("raw_message"):
-                            await delete_msg(websocket, msg.get("message_id"))
-                            FLAG = True
-                        if FLAG:
-                            await send_group_msg(
-                                websocket,
-                                group_id,
-                                "卷卷递归发现违规QQ之前的消息中有视频，已进行撤回",
-                            )
+                # history_msg = await get_group_msg_history(websocket, group_id, 10)
+                # messages = history_msg.get("data", {}).get("messages", [])
+                # for msg in messages:
+                #     if str(msg.get("user_id")) == user_id:
+                #         FLAG = False
+                #         if "[CQ:video," in msg.get("raw_message"):
+                #             await delete_msg(websocket, msg.get("message_id"))
+                #             FLAG = True
+                #         if FLAG:
+                #             await send_group_msg(
+                #                 websocket,
+                #                 group_id,
+                #                 "卷卷递归发现违规QQ之前的消息中有视频，已进行撤回",
+                #             )
                 return True
     except Exception as e:
         logging.error(f"检查违禁词时发生错误: {e}")
