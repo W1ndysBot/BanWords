@@ -99,93 +99,99 @@ async def list_BanWords(websocket, group_id, user_id):
 
 # 检查违禁词的主函数
 async def check_BanWords(websocket, group_id, msg):
-    if not load_BanWords_switch(group_id) or is_authorized(
-        msg["sender"]["role"], msg["sender"]["user_id"]
-    ):
-        return False
+    try:
+        if not load_BanWords_switch(group_id) or is_authorized(
+            msg["sender"]["role"], msg["sender"]["user_id"]
+        ):
+            return False
 
-    # 视频监控
-    if load_switch(group_id, "视频监控"):
-        message_id = int(msg["message_id"])
-        if "[CQ:video," in msg["raw_message"]:
-            await delete_msg(websocket, message_id)
-            warning_message = "为防止广告，本群禁止发送视频。"
-            await send_group_msg(websocket, group_id, warning_message)
-            return
+        # 视频监控
+        if load_switch(group_id, "视频监控"):
+            message_id = int(msg["message_id"])
+            if "[CQ:video," in msg["raw_message"]:
+                await delete_msg(websocket, message_id)
+                warning_message = "为防止广告，本群禁止发送视频。"
+                await send_group_msg(websocket, group_id, warning_message)
+                return
 
-    # 违禁词检测
-    BanWords = load_BanWords(group_id)
-    raw_message = msg.get("raw_message")
+        # 违禁词检测
+        BanWords = load_BanWords(group_id)
+        raw_message = msg.get("raw_message")
 
-    for word in BanWords:
+        for word in BanWords:
+            # 检查是否为违禁词，在re.search中，违禁词内容可以是字符串或正则表达式
+            if re.search(word, raw_message):
+                message_id = msg.get("message_id")
+                user_id = str(msg.get("sender").get("user_id"))
+                await set_group_ban(
+                    websocket, group_id, user_id, 60 * 60 * 24 * 30
+                )  # 禁言30天
+                await delete_msg(websocket, message_id)
 
-        # 检查是否为违禁词，在re.search中，违禁词内容可以是字符串或正则表达式
-        if re.search(word, raw_message):
-            message_id = msg.get("message_id")
-            user_id = str(msg.get("sender").get("user_id"))
-            await set_group_ban(websocket, group_id, user_id, 60 * 60 * 24 * 30)  # 禁言30天
-            await delete_msg(websocket, message_id)
-
-            # 初始化警告消息
-            warning_message = (
-                f"[CQ:at,qq={user_id}]\n"
-                + "警告：请不要发送违禁词，误封请联系管理员处理\n"
-            )
-
-            # 获取群成员列表, 艾特管理员
-            group_member = await get_group_member_list(websocket, group_id)
-            for member in group_member:
-                if member.get("role") == "owner":
-                    warning_message += f"[CQ:at,qq={member.get('user_id')}] "
-
-            warning_message += "\n"
-            warning_message += f"违规QQ是【{user_id}】\n"
-            warning_message += f"快捷命令：t踢出bladd踢出并拉黑"
-            await send_group_msg(websocket, group_id, warning_message)
-
-            await asyncio.sleep(0.1)
-            # 分离命令便于复制
-            await send_group_msg_with_reply(websocket, group_id, f"t{user_id}")
-
-            await send_group_msg_with_reply(websocket, group_id, f"bladd{user_id}")
-            await send_group_msg_with_reply(
-                websocket,
-                report_group_id,
-                f"------------------------------------------",
-            )
-            await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
-
-            # 检查邀请链
-            invited_users = get_invited_users(group_id, user_id)
-            if invited_users:
-                await send_group_msg(
-                    websocket,
-                    group_id,
-                    f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
+                # 初始化警告消息
+                warning_message = (
+                    f"[CQ:at,qq={user_id}]\n"
+                    + "警告：请不要发送违禁词，误封请联系管理员处理\n"
                 )
 
-            await send_group_msg(
-                websocket,
-                report_group_id,
-                f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
-            )
-            await asyncio.sleep(0.1)  # 等待0.1秒，让消息发送完毕
-            await send_group_msg(websocket, report_group_id, f"{raw_message}")
-            history_msg = await get_group_msg_history(websocket, group_id, 10)
-            messages = history_msg.get("data", {}).get("messages", [])
-            for msg in messages:
-                if str(msg.get("user_id")) == user_id:
-                    FLAG = False
-                    if "[CQ:video," in msg.get("raw_message"):
-                        await delete_msg(websocket, msg.get("message_id"))
-                        FLAG = True
-                    if FLAG:
-                        await send_group_msg(
-                            websocket,
-                            group_id,
-                            "卷卷递归发现违规QQ之前的消息中有视频，已进行撤回",
-                        )
-            return True
+                # 获取群成员列表, 艾特管理员
+                group_member = await get_group_member_list(websocket, group_id)
+                for member in group_member:
+                    if member.get("role") == "owner":
+                        warning_message += f"[CQ:at,qq={member.get('user_id')}] "
+
+                warning_message += "\n"
+                warning_message += f"违规QQ是【{user_id}】\n"
+                warning_message += f"快捷命令：t踢出bladd踢出并拉黑"
+                await send_group_msg(websocket, group_id, warning_message)
+
+                # 分离命令便于复制
+                await send_group_msg(websocket, group_id, f"t{user_id}")
+
+                await send_group_msg(websocket, group_id, f"bladd{user_id}")
+                await send_group_msg(
+                    websocket,
+                    report_group_id,
+                    f"------------------------------------------",
+                )
+
+                # 检查邀请链
+                invited_users = get_invited_users(group_id, user_id)
+                if invited_users:
+                    await send_group_msg(
+                        websocket,
+                        group_id,
+                        f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
+                    )
+
+                await send_group_msg(
+                    websocket,
+                    report_group_id,
+                    f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
+                )
+                await send_group_msg(websocket, report_group_id, f"{raw_message}")
+                history_msg = await get_group_msg_history(websocket, group_id, 10)
+                messages = history_msg.get("data", {}).get("messages", [])
+                for msg in messages:
+                    if str(msg.get("user_id")) == user_id:
+                        FLAG = False
+                        if "[CQ:video," in msg.get("raw_message"):
+                            await delete_msg(websocket, msg.get("message_id"))
+                            FLAG = True
+                        if FLAG:
+                            await send_group_msg(
+                                websocket,
+                                group_id,
+                                "卷卷递归发现违规QQ之前的消息中有视频，已进行撤回",
+                            )
+                return True
+    except Exception as e:
+        logging.error(f"检查违禁词时发生错误: {e}")
+        await send_group_msg(
+            websocket,
+            group_id,
+            f"检查违禁词时发生错误，请稍后再试。",
+        )
     return False
 
 
