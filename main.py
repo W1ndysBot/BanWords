@@ -180,7 +180,7 @@ async def check_BanWords(websocket, group_id, msg):
         await send_group_msg(
             websocket,
             group_id,
-            f"检查违禁词时发生错误，请稍后再试。",
+            f"检查违禁词时发生错误，请稍后再试。错误信息: {e}",
         )
     return False
 
