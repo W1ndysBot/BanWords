@@ -149,11 +149,12 @@ async def check_BanWords(websocket, group_id, msg):
                 await send_group_msg(websocket, group_id, f"t{user_id}")
 
                 await send_group_msg(websocket, group_id, f"bladd{user_id}")
-                await send_group_msg(
-                    websocket,
-                    report_group_id,
-                    f"------------------------------------------",
-                )
+                for group_id in report_group_ids:
+                    await send_group_msg(
+                        websocket,
+                        group_id,
+                        f"------------------------------------------",
+                    )
 
                 # 检查邀请链
                 invited_users = get_invited_users(group_id, user_id)
@@ -164,12 +165,13 @@ async def check_BanWords(websocket, group_id, msg):
                         f"[+]检测到违规QQ[{user_id}]邀请了[{invited_users}]，请注意甄别相关用户身份",
                     )
 
-                await send_group_msg(
-                    websocket,
-                    report_group_id,
-                    f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
-                )
-                await send_group_msg(websocket, report_group_id, f"{raw_message}")
+                for group_id in report_group_ids:
+                    await send_group_msg(
+                        websocket,
+                        group_id,
+                        f"群【{group_id}】\n成员【{user_id}】\n在【{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}】发送了违禁词【{word}】\n原消息内容见下条消息",
+                    )
+                    await send_group_msg(websocket, group_id, f"{raw_message}")
 
                 # 发出获取历史记录的申请
                 await get_group_msg_history(websocket, group_id, 10, user_id)
