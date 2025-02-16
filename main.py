@@ -354,7 +354,8 @@ async def handle_BanWords_group_message(websocket, msg):
 # 处理违禁词回应事件
 async def handle_BanWords_response_message(websocket, message):
     try:
-        msg = json.loads(message)
+        # 如果message已经是字典，就直接使用，否则尝试解析JSON
+        msg = message if isinstance(message, dict) else json.loads(message)
 
         if msg.get("status") == "ok":
             echo = msg.get("echo")
