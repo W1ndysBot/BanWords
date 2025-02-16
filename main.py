@@ -377,3 +377,78 @@ async def handle_BanWords_response_message(websocket, message):
                                 )
     except Exception as e:
         logging.error(f"处理违禁词回应事件时发生错误: {e}")
+
+
+# 统一事件处理入口
+async def handle_events(websocket, msg):
+    """统一事件处理入口"""
+    try:
+        # 处理回调事件
+        if msg.get("status") == "ok":
+            await handle_BanWords_response_message(websocket, msg)
+            return
+
+        post_type = msg.get("post_type")
+
+        # 处理元事件
+        if post_type == "meta_event":
+            return
+
+        # 处理消息事件
+        elif post_type == "message":
+            message_type = msg.get("message_type")
+            if message_type == "group":
+                group_id = str(msg.get("group_id", ""))
+                message_id = str(msg.get("message_id", ""))
+                raw_message = str(msg.get("raw_message", ""))
+                user_id = str(msg.get("user_id", ""))
+                role = str(msg.get("sender", {}).get("role", ""))
+
+                # 检查是否有权限
+                authorized = is_authorized(role, user_id)
+
+                # 处理违禁词相关命令
+                if raw_message == "banwords":
+                    await BanWords(websocket, group_id, message_id)
+
+                # 管理违禁词
+                await manage_BanWords(
+                    websocket, message_id, group_id, user_id, raw_message, authorized
+                )
+
+                await manage_video_check(
+                    websocket, group_id, raw_message, message_id, authorized
+                )
+
+                # 如果不是管理员,检查违禁词
+                if not authorized:
+                    await check_BanWords(websocket, group_id, msg)
+
+            elif message_type == "private":
+                return
+
+    except Exception as e:
+        error_type = {
+            "message": "消息",
+            "notice": "通知",
+            "request": "请求",
+            "meta_event": "元事件",
+        }.get(post_type, "未知")
+
+        logging.error(f"处理违禁词{error_type}事件失败: {e}")
+
+        # 发送错误提示
+        if post_type == "message":
+            message_type = msg.get("message_type")
+            if message_type == "group":
+                await send_group_msg(
+                    websocket,
+                    msg.get("group_id"),
+                    f"处理违禁词{error_type}事件失败，错误信息：{str(e)}",
+                )
+            elif message_type == "private":
+                await send_private_msg(
+                    websocket,
+                    msg.get("user_id"),
+                    f"处理违禁词{error_type}事件失败，错误信息：{str(e)}",
+                )
